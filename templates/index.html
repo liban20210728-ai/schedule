@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日程管理</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #fafafa 0%, #f5f0f6 50%, #fdf2f8 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* 标题区域 */
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-subtitle {
+            font-size: 1rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 24px 24px 0 0 !important;
+            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
+        }
+        
+        .card-header h3, .card-header h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.125rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-body {
+            padding: 24px;
+        }
+        
+        /* 日历样式 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 10px 4px;
+            background: #fafafa;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .calendar-day:hover {
+            background: #fdf2f8;
+            transform: scale(1.05);
+            border-color: rgba(236, 72, 153, 0.3);
+        }
+        
+        .calendar-day.today {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .calendar-day.today .lunar-date {
+            opacity: 0.8;
+        }
+        
+        .calendar-day.selected {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            border: 3px solid #ec4899;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+        }
+        
+        .calendar-day.selected .day-number {
+            color: #be185d;
+            font-weight: 700;
+        }
+        
+        .calendar-day.selected .lunar-date {
+            color: #9d174d;
+            opacity: 0.8;
+        }
+        
+        .calendar-day.other-month {
+            opacity: 0.3;
+            background: #f5f5f5;
+        }
+        
+        .calendar-day.holiday {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: rgba(251, 191, 36, 0.4);
+        }
+        
+        .calendar-day.workday {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .day-number {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: #1f2937;
+        }
+        
+        .lunar-date {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-bottom: 3px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        .calendar-day.today .lunar-date {
+            color: white;
+        }
+        
+        .holiday-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: #ef4444;
+            color: white;
+            margin-top: 2px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .calendar-day.today .holiday-tag {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .day-tasks {
+            flex: 1;
+            width: 100%;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        
+        .mini-task {
+            font-size: 8px;
+            padding: 2px 4px;
+            margin-bottom: 1px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+        }
+        
+        .mini-task.high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .mini-task.normal {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        /* 任务卡片 */
+        .task-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .task-card:hover {
+            border-color: #fbcfe8;
+            box-shadow: 0 4px 20px rgba(236, 72, 153, 0.08);
+            transform: translateX(4px);
+        }
+        
+        .task-card.completed {
+            background: #f9fafb;
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+        
+        .priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .priority-normal {
+            border-left: 4px solid #10b981;
+        }
+        
+        /* 类别标签 */
+        .category-tag {
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .category-work {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .category-personal {
+            background: #fce7f3;
+            color: #db2777;
+        }
+        
+        .category-study {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .category-other {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        /* 时间段标签样式 */
+        .time-slot-tag {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        
+        /* 一周视图样式 */
+        .week-view {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+        
+        .week-day {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            min-height: 180px;
+            transition: all 0.2s ease;
+        }
+        
+        .week-day:hover {
+            background: #f3f4f6;
+        }
+        
+        .week-day-header {
+            margin-bottom: 12px;
+        }
+        
+        .week-day-date {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .week-day-weekday {
+            display: block;
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        
+        .today-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .week-day-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .week-task {
+            background: white;
+            border-radius: 10px;
+            padding: 8px;
+            text-align: left;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .week-task.completed {
+            opacity: 0.5;
+        }
+        
+        .week-task-content {
+            display: block;
+            font-size: 0.875rem;
+            color: #374151;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .week-task-time {
+            display: block;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .no-task {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            padding: 10px 0;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+        }
+        
+        .btn-white {
+            background: rgba(255, 255, 255, 0.9);
+            color: #ec4899;
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-white:hover {
+            background: white;
+            border-color: rgba(236, 72, 153, 0.4);
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.15);
+        }
+        
+        /* 删除按钮样式 */
+        .delete-btn {
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            margin-left: 4px;
+        }
+        
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #dc2626;
+            transform: scale(1.1);
+        }
+        
+        /* 表单样式 */
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #fbcfe8;
+            box-shadow: 0 0 0 3px rgba(251, 207, 232, 0.3);
+            outline: none;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        /* 星期标题 */
+        .weekday-title {
+            text-align: center;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 10px 6px;
+            font-size: 13px;
+        }
+        
+        /* 视图切换标签 */
+        .view-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .view-tab {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 20px;
+            padding: 4px 16px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .view-tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .view-tab.active {
+            background: white;
+            color: #8b5cf6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 假期提示 */
+        .holiday-info {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #fef3c7;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #92400e;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .header-section {
+                margin-bottom: 20px;
+            }
+            
+            .header-title {
+                font-size: 1.75rem;
+            }
+            
+            .card {
+                border-radius: 16px;
+            }
+            
+            .card-header {
+                padding: 16px 20px;
+            }
+            
+            .card-body {
+                padding: 16px;
+            }
+            
+            /* 日历优化 */
+            .calendar-grid {
+                gap: 4px;
+            }
+            
+            .calendar-day {
+                padding: 6px 2px;
+                border-radius: 12px;
+            }
+            
+            .day-number {
+                font-size: 14px;
+            }
+            
+            .lunar-date {
+                font-size: 8px;
+            }
+            
+            .holiday-tag {
+                font-size: 6px;
+                padding: 1px 4px;
+            }
+            
+            .mini-task {
+                font-size: 6px;
+                padding: 1px 3px;
+            }
+            
+            /* 周视图优化 */
+            .week-view {
+                gap: 8px;
+            }
+            
+            .week-day {
+                padding: 12px;
+                min-height: 140px;
+            }
+            
+            .week-day-date {
+                font-size: 1rem;
+            }
+            
+            .week-day-weekday {
+                font-size: 0.75rem;
+            }
+            
+            .week-task {
+                padding: 6px;
+            }
+            
+            .week-task-content {
+                font-size: 0.75rem;
+            }
+            
+            .week-task-time {
+                font-size: 0.625rem;
+            }
+            
+            /* 表单优化 */
+            .form-control, .form-select {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+            
+            .btn-primary {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .btn-white {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            /* 任务卡片优化 */
+            .task-card {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .task-card h6 {
+                font-size: 0.875rem;
+                margin-bottom: 2px;
+            }
+            
+            .task-card p {
+                font-size: 10px;
+            }
+            
+            .time-slot-tag {
+                font-size: 9px;
+                padding: 1px 6px;
+            }
+            
+            .category-tag {
+                font-size: 8px;
+                padding: 2px 8px;
+            }
+            
+            /* 视图切换标签 */
+            .view-tab {
+                padding: 3px 12px;
+                font-size: 10px;
+            }
+            
+            /* 已完成任务 */
+            .card-header h4 {
+                font-size: 1rem;
+            }
+            
+            /* 提高点击区域 */
+            .form-check-input {
+                transform: scale(1.2);
+                margin-right: 8px;
+            }
+            
+            .delete-btn {
+                padding: 6px 10px;
+            }
+        }
+
+        /* 小屏幕设备优化 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px 10px;
+            }
+            
+            .header-title {
+                font-size: 1.5rem;
+            }
+            
+            .header-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            /* 日历优化 */
+            .calendar-day {
+                padding: 4px 2px;
+            }
+            
+            .day-number {
+                font-size: 12px;
+            }
+            
+            /* 表单优化 */
+            .form-control, .form-select {
+                padding: 8px 12px;
+            }
+            
+            /* 任务卡片优化 */
+            .task-card {
+                padding: 10px;
+            }
+            
+            /* 视图切换标签 */
+            .view-tab {
+                padding: 2px 8px;
+                font-size: 9px;
+            }
+            
+            /* 周视图优化 - 手机端 */
+            .week-view {
+                display: flex;
+                overflow-x: auto;
+                gap: 10px;
+                padding-bottom: 10px;
+                scrollbar-width: thin;
+            }
+            
+            .week-day {
+                min-width: 120px;
+                flex-shrink: 0;
+                padding: 10px;
+                min-height: 160px;
+            }
+            
+            .week-day-date {
+                font-size: 0.875rem;
+            }
+            
+            .week-day-weekday {
+                font-size: 0.75rem;
+            }
+            
+            .week-task {
+                padding: 5px;
+            }
+            
+            .week-task-content {
+                font-size: 0.75rem;
+            }
+            
+            .week-task-time {
+                font-size: 0.625rem;
+            }
+        }
+
+        /* 平板设备优化 */
+        @media (min-width: 481px) and (max-width: 768px) {
+            /* 周视图优化 - 平板端 */
+            .week-view {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 8px;
+            }
+            
+            .week-day {
+                padding: 10px;
+                min-height: 140px;
+            }
+            
+            .week-task-content {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* 移动端触摸优化 */
+        @media (hover: none) and (pointer: coarse) {
+            /* 日历日期触摸优化 */
+            .calendar-day {
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            }
+            
+            .calendar-day:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+            
+            /* 按钮触摸优化 */
+            .btn-primary, .btn-white, .delete-btn, .view-tab {
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            }
+            
+            .btn-primary:active, .btn-white:active, .delete-btn:active, .view-tab:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+            
+            /* 表单元素触摸优化 */
+            .form-control, .form-select {
+                touch-action: manipulation;
+            }
+            
+            /* 任务卡片触摸优化 */
+            .task-card {
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            }
+            
+            .task-card:active {
+                transform: scale(0.98);
+                transition: transform 0.1s ease;
+            }
+            
+            /* 复选框触摸优化 */
+            .form-check-input {
+                transform: scale(1.3);
+                margin-right: 10px;
+            }
+        }
+
+        /* 触摸反馈通用样式 */
+        .touch-feedback {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .touch-feedback:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease;
+        }
+
+        /* 折叠按钮样式 */
+        .collapse-btn svg {
+            transition: transform 0.3s ease;
+            fill: currentColor;
+        }
+        
+        .collapse-btn:hover svg {
+            transform: scale(1.1);
+        }
+        
+        .collapse-btn:active svg {
+            transform: scale(0.95);
+        }
+        
+        /* 日历折叠按钮特殊样式 */
+        .view-tab.collapse-btn {
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .view-tab.collapse-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题区域 -->
+        <div class="header-section">
+            <h1 class="header-title">高效管理你的一天</h1>
+            <p class="header-subtitle">让每一天都充实而有意义 ✨</p>
+        </div>
+
+        <div class="row">
+            <!-- 左侧：日历视图 -->
+            <div class="col-12 col-lg-8 mb-6">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button class="btn-white" onclick="changeMonth(-1)" title="上一月">‹</button>
+                            <div class="text-center flex-grow-1">
+                                <div class="view-tabs">
+                                    <button id="month-view-btn" class="view-tab active" onclick="switchToMonthView()">📅 月视图</button>
+                                    <button id="week-view-btn" class="view-tab" onclick="switchToWeekView()">📆 周视图</button>
+                                    <button class="view-tab collapse-btn" onclick="toggleCalendar()" title="折叠/展开日历">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 18l6-6-6-6"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <h3 id="calendar-title">📅 {{ current_year }}年{{ current_month }}月</h3>
+                            </div>
+                            <button class="btn-white" onclick="changeMonth(1)" title="下一月">›</button>
+                        </div>
+                    </div>
+                    <div id="calendar-content" class="card-body">
+                        <!-- 星期标题 -->
+                        <div id="weekday-titles" class="calendar-grid mb-3">
+                            <div class="weekday-title">日</div>
+                            <div class="weekday-title">一</div>
+                            <div class="weekday-title">二</div>
+                            <div class="weekday-title">三</div>
+                            <div class="weekday-title">四</div>
+                            <div class="weekday-title">五</div>
+                            <div class="weekday-title">六</div>
+                        </div>
+                        <!-- 日历网格 -->
+                        <div id="calendar-grid" class="calendar-grid"></div>
+                        <!-- 一周视图 -->
+                        <div id="week-view-container" class="week-view-container" style="display: none;"></div>
+                        
+                        <!-- 假期信息提示 -->
+                        <div id="holiday-info" class="holiday-info" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：添加日程和任务列表 -->
+            <div class="col-12 col-lg-4">
+                <!-- 添加日程表单 -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>添加新日程</h4>
+                        <button class="btn-white collapse-btn" onclick="toggleAddSchedule()" title="折叠/展开">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="add-schedule-content" class="card-body">
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="content" class="form-label">日程内容</label>
+                                <input type="text" class="form-control" id="content" name="content" required placeholder="今天要做什么呢...">
+                            </div>
+                            <div class="mb-3">
+                                <label for="date" class="form-label">日期</label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="time_slot" class="form-label">时间段</label>
+                                <select class="form-select" id="time_slot" name="time_slot">
+                                    <option value="上午">🌅 上午 (6:00-12:00)</option>
+                                    <option value="下午">☀️ 下午 (12:00-18:00)</option>
+                                    <option value="晚上">🌙 晚上 (18:00-24:00)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category" class="form-label">任务类别</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="工作">💼 工作</option>
+                                    <option value="个人">👧 个人</option>
+                                    <option value="学习">📚 学习</option>
+                                    <option value="其他">🎈 其他</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">重要程度</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="普通">🌼 普通</option>
+                                    <option value="紧急">🔥 紧急</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">添加日程</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 当日任务列表 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 id="today-tasks-title">今日任务</h4>
+                        <button class="btn-white collapse-btn" onclick="toggleTodayTasks()" title="折叠/展开">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="today-tasks-content" class="card-body">
+                        <div id="today-tasks-list">
+                            {% for task in tasks %}
+                                {% if not task.completed %}
+                                    <div class="task-card priority-{{ 'high' if task.priority == '紧急' else 'normal' }}">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">{{ task.content }}</h6>
+                                                <p style="font-size: 12px; color: #6b7280;">
+                                                    {{ task.date }} 
+                                                    <span class="time-slot-tag">{{ task.time_slot }}</span>
+                                                    | {{ task.priority }}
+                                                    <span class="category-tag category-{{ task.category.lower() }}">{{ task.category }}</span>
+                                                </p>
+                                            </div>
+                                            <input type="checkbox" class="form-check-input" onchange="handleTaskComplete(this, {{ task.id }})" style="margin-top: 2px;">
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if tasks|length == 0 %}
+                                <p class="text-center" style="color: #9ca3af; padding: 20px 0;">还没有任务呢~ 添加一个吧！</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 已完成任务 -->
+        <div class="card mt-6">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>已完成任务</h4>
+                <button class="btn-white collapse-btn" onclick="toggleCompletedTasks()" title="折叠/展开">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="completed-tasks-content" class="card-body">
+                <div class="row">
+                    {% for task in tasks %}
+                        {% if task.completed %}
+                            <div class="col-12 col-md-6 col-lg-4 mb-3">
+                                <div class="task-card completed priority-{{ 'high' if task.priority == '紧急' else 'normal' }}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 4px; text-decoration: line-through; opacity: 0.7;">{{ task.content }}</h6>
+                                            <p style="font-size: 12px; color: #9ca3af;">
+                                                {{ task.date }} 
+                                                <span class="time-slot-tag">{{ task.time_slot }}</span>
+                                                | {{ task.priority }}
+                                                <span class="category-tag category-{{ task.category.lower() }}">{{ task.category }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <input type="checkbox" class="form-check-input" checked onchange="handleTaskComplete(this, {{ task.id }})" style="margin-top: 2px;">
+                                            <button class="btn btn-sm btn-danger delete-btn" onclick="deleteTask({{ task.id }})" title="删除任务">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if tasks|selectattr('completed', 'equalto', 1)|list|length == 0 %}
+                        <p class="text-center col-12" style="color: #9ca3af; padding: 20px 0;">还没有完成的任务哦~ 💪</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 当前选中的日期
+        let selectedDate = new Date().toISOString().split('T')[0];
+        
+        // 当前显示的年月
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        
+        // 当前视图模式: 'month' 或 'week'
+        let currentView = 'month';
+        
+        // 日历折叠状态
+        let calendarCollapsed = false;
+        
+        // 添加日程折叠状态
+        let addScheduleCollapsed = false;
+        
+        // 今日任务折叠状态
+        let todayTasksCollapsed = false;
+        
+        // 已完成任务折叠状态
+        let completedTasksCollapsed = false;
+        
+        // 双击计时器
+        let doubleClickTimer = null;
+        
+        // 任务数据（从服务器获取）
+        const allTasks = {{ tasks | tojson | safe }};
+        
+        // 获取放假安排数据（包含连休和调休）
+        function getHolidaySchedule(year) {
+            const schedules = {
+                2025: {
+                    '01-01': { name: '元旦', days: 1, type: 'holiday' },
+                    '01-29': { name: '春节', days: 8, type: 'holiday' },
+                    '04-04': { name: '清明', days: 3, type: 'holiday' },
+                    '05-01': { name: '劳动节', days: 5, type: 'holiday' },
+                    '06-07': { name: '端午', days: 3, type: 'holiday' },
+                    '09-13': { name: '中秋', days: 3, type: 'holiday' },
+                    '10-01': { name: '国庆节', days: 7, type: 'holiday' },
+                },
+                2026: {
+                    '01-01': { name: '元旦', days: 1, type: 'holiday' },
+                    '02-17': { name: '春节', days: 8, type: 'holiday' },
+                    '04-04': { name: '清明', days: 3, type: 'holiday' },
+                    '05-01': { name: '劳动节', days: 5, type: 'holiday' },
+                    '06-25': { name: '端午', days: 3, type: 'holiday' },
+                    '10-06': { name: '中秋', days: 4, type: 'holiday' },
+                    '10-01': { name: '国庆节', days: 7, type: 'holiday' },
+                },
+                2027: {
+                    '01-01': { name: '元旦', days: 1, type: 'holiday' },
+                    '02-06': { name: '春节', days: 8, type: 'holiday' },
+                    '04-05': { name: '清明', days: 3, type: 'holiday' },
+                    '05-01': { name: '劳动节', days: 5, type: 'holiday' },
+                    '06-15': { name: '端午', days: 3, type: 'holiday' },
+                    '09-25': { name: '中秋', days: 3, type: 'holiday' },
+                    '10-01': { name: '国庆节', days: 7, type: 'holiday' },
+                }
+            };
+            return schedules[year] || {};
+        }
+        
+        // 检查日期是否在假期范围内
+        function checkHolidayInRange(year, month, day) {
+            const schedules = getHolidaySchedule(year);
+            const dateStr = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            for (const [startDate, info] of Object.entries(schedules)) {
+                const [startMonth, startDay] = startDate.split('-').map(Number);
+                const start = new Date(year, startMonth - 1, startDay);
+                const end = new Date(year, startMonth - 1, startDay + info.days - 1);
+                const current = new Date(year, month, day);
+                
+                if (current >= start && current <= end) {
+                    return { ...info, isFirstDay: current.getTime() === start.getTime() };
+                }
+            }
+            return null;
+        }
+        
+        // 农历日期计算
+        function getLunarDate(year, month, day) {
+            const lunarInfo = [
+                0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+                0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+                0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+                0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+                0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+                0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0,
+                0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+                0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6,
+                0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+                0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+                0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+                0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+                0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+                0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+                0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0
+            ];
+            
+            const lunarMonth = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"];
+            const lunarDay = ["初", "十", "廿", "三"];
+            
+            let i, leap = 0, temp = 0;
+            
+            if ((year < 1900) || (year > 2100)) {
+                return "";
+            }
+            
+            let offset = (Date.UTC(year, month, day) - Date.UTC(1900, 0, 31)) / 86400000;
+            
+            for (i = 1900; i < 2101 && offset > 0; i++) {
+                temp = lYearDays(i);
+                offset -= temp;
+            }
+            
+            if (offset < 0) {
+                offset += temp;
+                i--;
+            }
+            
+            let lunarYear = i;
+            leap = leapMonth(i);
+            let isLeap = false;
+            
+            for (i = 1; i < 13 && offset > 0; i++) {
+                if (leap > 0 && i === (leap + 1) && isLeap === false) {
+                    --i;
+                    isLeap = true;
+                    temp = leapDays(lunarYear);
+                } else {
+                    temp = monthDays(lunarYear, i);
+                }
+                
+                if (isLeap === true && i === (leap + 1)) {
+                    isLeap = false;
+                }
+                
+                offset -= temp;
+            }
+            
+            if (offset === 0 && leap > 0 && i === leap + 1) {
+                if (isLeap) {
+                    isLeap = false;
+                } else {
+                    isLeap = true;
+                    --i;
+                }
+            }
+            
+            if (offset < 0) {
+                offset += temp;
+                --i;
+            }
+            
+            let lunarMonthNum = i;
+            let lunarDayNum = offset + 1;
+            
+            let dayStr = "";
+            if (lunarDayNum <= 10) {
+                dayStr = lunarDay[0] + ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][lunarDayNum];
+            } else if (lunarDayNum < 20) {
+                dayStr = lunarDay[1] + ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"][lunarDayNum - 10];
+            } else if (lunarDayNum === 20) {
+                dayStr = "二十";
+            } else if (lunarDayNum < 30) {
+                dayStr = lunarDay[2] + ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"][lunarDayNum - 20];
+            } else if (lunarDayNum === 30) {
+                dayStr = "三十";
+            }
+            
+            return lunarMonth[lunarMonthNum - 1] + "月" + dayStr;
+            
+            function lYearDays(y) {
+                let i, sum = 348;
+                for (i = 0x8000; i > 0x8; i >>= 1) {
+                    sum += (lunarInfo[y - 1900] & i) ? 1 : 0;
+                }
+                return (sum + leapDays(y));
+            }
+            
+            function leapMonth(y) {
+                return (lunarInfo[y - 1900] & 0xf);
+            }
+            
+            function leapDays(y) {
+                if (leapMonth(y)) {
+                    return ((lunarInfo[y - 1900] & 0x10000) ? 30 : 29);
+                } else {
+                    return (0);
+                }
+            }
+            
+            function monthDays(y, m) {
+                return ((lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29);
+            }
+        }
+        
+        // 获取节假日信息
+        function getHolidayInfo(year, month, day) {
+            const holidays = {
+                '01-01': { name: '元旦', type: 'festival' },
+                '02-14': { name: '情人节', type: 'festival' },
+                '03-08': { name: '妇女节', type: 'festival' },
+                '03-12': { name: '植树节', type: 'festival' },
+                '04-01': { name: '愚人节', type: 'festival' },
+                '05-04': { name: '青年节', type: 'festival' },
+                '06-01': { name: '儿童节', type: 'festival' },
+                '07-01': { name: '建党节', type: 'festival' },
+                '08-01': { name: '建军节', type: 'festival' },
+                '09-10': { name: '教师节', type: 'festival' },
+                '12-25': { name: '圣诞节', type: 'festival' },
+            };
+            
+            const monthDay = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // 先检查连休假期
+            const holidayRange = checkHolidayInRange(year, month, day);
+            if (holidayRange) {
+                return holidayRange.isFirstDay ? 
+                    { name: holidayRange.name, type: 'holiday', days: holidayRange.days } : 
+                    { name: holidayRange.name + '假期', type: 'holiday' };
+            }
+            
+            // 检查固定节日
+            if (holidays[monthDay]) {
+                return holidays[monthDay];
+            }
+            
+            // 检查农历节日
+            const lunarDate = getLunarDate(year, month, day);
+            if (lunarDate.includes('正月初一')) {
+                return { name: '春节', type: 'holiday' };
+            }
+            if (lunarDate.includes('正月十五')) {
+                return { name: '元宵节', type: 'festival' };
+            }
+            if (lunarDate.includes('五月初五')) {
+                return { name: '端午', type: 'holiday' };
+            }
+            if (lunarDate.includes('八月十五')) {
+                return { name: '中秋', type: 'holiday' };
+            }
+            if (lunarDate.includes('九月初九')) {
+                return { name: '重阳节', type: 'festival' };
+            }
+            
+            return null;
+        }
+        
+        // 渲染日历
+        function renderCalendar(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            let html = '';
+            
+            for (let i = 0; i < startDay; i++) {
+                html += '<div class="calendar-day other-month"></div>';
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === selectedDate;
+                const lunarDate = getLunarDate(year, month, day);
+                const holidayInfo = getHolidayInfo(year, month, day);
+                const isHoliday = holidayInfo && holidayInfo.type === 'holiday';
+                const dayTasks = allTasks.filter(t => t.date === dateStr && !t.completed);
+                
+                let dayClasses = '';
+                if (isToday) dayClasses += ' today ';
+                if (isSelected) dayClasses += ' selected ';
+                if (isHoliday) dayClasses += ' holiday ';
+                
+                html += `<div class="calendar-day${dayClasses}" onclick="handleDayClick('${dateStr}')" ondblclick="handleDayDoubleClick('${dateStr}')">`;
+                html += `<div class="day-number">${day}</div>`;
+                html += `<div class="lunar-date">${lunarDate}</div>`;
+                if (holidayInfo) {
+                    const tagName = holidayInfo.days ? holidayInfo.name + '(' + holidayInfo.days + '天)' : holidayInfo.name;
+                    html += `<div class="holiday-tag">${tagName}</div>`;
+                }
+                html += '<div class="day-tasks">';
+                dayTasks.slice(0, 2).forEach(task => {
+                    html += `<div class="mini-task ${task.priority === '紧急' ? 'high' : 'normal'}">${task.content}</div>`;
+                });
+                if (dayTasks.length > 2) {
+                    html += `<div class="mini-task" style="background:#e5e7eb;color:#6b7280">+${dayTasks.length - 2}</div>`;
+                }
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            const remainingCells = 42 - (startDay + daysInMonth);
+            for (let i = 0; i < remainingCells; i++) {
+                html += '<div class="calendar-day other-month"></div>';
+            }
+            
+            document.getElementById('calendar-grid').innerHTML = html;
+            document.querySelector('.card-header h3').textContent = `📅 ${year}年${month + 1}月`;
+            
+            currentYear = year;
+            currentMonth = month;
+            
+            // 更新假期信息提示
+            updateHolidayInfo(year, month);
+        }
+        
+        function updateHolidayInfo(year, month) {
+            const schedules = getHolidaySchedule(year);
+            const monthStr = String(month + 1).padStart(2, '0');
+            const monthHolidays = [];
+            
+            for (const [date, info] of Object.entries(schedules)) {
+                if (date.startsWith(monthStr)) {
+                    monthHolidays.push(`${info.name}: ${info.days}天假期`);
+                }
+            }
+            
+            const holidayInfoEl = document.getElementById('holiday-info');
+            if (monthHolidays.length > 0) {
+                holidayInfoEl.textContent = '本月放假安排：' + monthHolidays.join('；');
+                holidayInfoEl.style.display = 'block';
+            } else {
+                holidayInfoEl.style.display = 'none';
+            }
+        }
+        
+        function changeMonth(delta) {
+            let year = currentYear;
+            let month = currentMonth;
+            
+            month += delta;
+            if (month < 0) {
+                month = 11;
+                year--;
+            } else if (month > 11) {
+                month = 0;
+                year++;
+            }
+            
+            renderCalendar(year, month);
+        }
+        
+        function selectDate(date) {
+            selectedDate = date;
+            document.getElementById('date').value = date;
+            renderCalendar(currentYear, currentMonth);
+            
+            const dateObj = new Date(date);
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('today-tasks-title').textContent = dateObj.toLocaleDateString('zh-CN', options) + ' 的任务';
+        }
+        
+        function handleDayClick(date) {
+            if (doubleClickTimer) {
+                clearTimeout(doubleClickTimer);
+                doubleClickTimer = null;
+                return;
+            }
+            
+            doubleClickTimer = setTimeout(() => {
+                doubleClickTimer = null;
+                // 单击：切换视图
+                toggleView();
+            }, 300);
+        }
+        
+        function handleDayDoubleClick(date) {
+            if (doubleClickTimer) {
+                clearTimeout(doubleClickTimer);
+                doubleClickTimer = null;
+            }
+            // 双击：查看当天日程
+            selectDate(date);
+            showDaySchedule(date);
+        }
+        
+        function toggleView() {
+            if (currentView === 'month') {
+                switchToWeekView();
+            } else {
+                switchToMonthView();
+            }
+        }
+        
+        function switchToWeekView() {
+            currentView = 'week';
+            
+            document.getElementById('calendar-grid').style.display = 'none';
+            document.getElementById('holiday-info').style.display = 'none';
+            document.getElementById('week-view-container').style.display = 'block';
+            
+            renderWeekView();
+            
+            document.getElementById('calendar-title').textContent = '📅 过往一周日程';
+            
+            // 更新视图标签状态
+            document.getElementById('month-view-btn').classList.remove('active');
+            document.getElementById('week-view-btn').classList.add('active');
+        }
+        
+        function toggleCalendar() {
+            calendarCollapsed = !calendarCollapsed;
+            const calendarContent = document.getElementById('calendar-content');
+            const toggleButton = document.querySelector('.view-tab[onclick="toggleCalendar()"]');
+            const arrow = toggleButton.querySelector('svg');
+            
+            if (calendarCollapsed) {
+                calendarContent.style.display = 'none';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                calendarContent.style.display = 'block';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function toggleAddSchedule() {
+            addScheduleCollapsed = !addScheduleCollapsed;
+            const addScheduleContent = document.getElementById('add-schedule-content');
+            const toggleButton = document.querySelector('.card-header button[onclick="toggleAddSchedule()"]');
+            const arrow = toggleButton.querySelector('svg');
+            
+            if (addScheduleCollapsed) {
+                addScheduleContent.style.display = 'none';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                addScheduleContent.style.display = 'block';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function toggleTodayTasks() {
+            todayTasksCollapsed = !todayTasksCollapsed;
+            const todayTasksContent = document.getElementById('today-tasks-content');
+            const toggleButton = document.querySelector('.card-header button[onclick="toggleTodayTasks()"]');
+            const arrow = toggleButton.querySelector('svg');
+            
+            if (todayTasksCollapsed) {
+                todayTasksContent.style.display = 'none';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                todayTasksContent.style.display = 'block';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function toggleCompletedTasks() {
+            completedTasksCollapsed = !completedTasksCollapsed;
+            const completedTasksContent = document.getElementById('completed-tasks-content');
+            const toggleButton = document.querySelector('.card-header button[onclick="toggleCompletedTasks()"]');
+            const arrow = toggleButton.querySelector('svg');
+            
+            if (completedTasksCollapsed) {
+                completedTasksContent.style.display = 'none';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                completedTasksContent.style.display = 'block';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function switchToMonthView() {
+            currentView = 'month';
+            
+            document.getElementById('calendar-grid').style.display = 'grid';
+            document.getElementById('holiday-info').style.display = 'block';
+            document.getElementById('week-view-container').style.display = 'none';
+            
+            renderCalendar(currentYear, currentMonth);
+            
+            document.getElementById('calendar-title').textContent = `📅 ${currentYear}年${currentMonth + 1}月`;
+            
+            // 更新视图标签状态
+            document.getElementById('week-view-btn').classList.remove('active');
+            document.getElementById('month-view-btn').classList.add('active');
+        }
+        
+        function renderWeekView() {
+            const today = new Date();
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            let html = '<div class="week-view">';
+            
+            // 获取本周一的日期
+            const todayDayOfWeek = today.getDay(); // 0-6, 0是周日
+            const daysToMonday = todayDayOfWeek === 0 ? -6 : 1 - todayDayOfWeek;
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + daysToMonday);
+            
+            // 从周日开始显示，共7天（周日到周六）
+            for (let dayOffset = -1; dayOffset <= 5; dayOffset++) {
+                const dateObj = new Date(monday);
+                dateObj.setDate(monday.getDate() + dayOffset);
+                
+                const dateStr = dateObj.toISOString().split('T')[0];
+                const day = dateObj.getDate();
+                const weekdayIndex = dateObj.getDay();
+                const weekday = weekdays[weekdayIndex];
+                const isToday = dateObj.toDateString() === today.toDateString();
+                
+                const dayTasks = allTasks.filter(t => t.date === dateStr);
+                
+                html += `<div class="week-day" onclick="selectDate('${dateStr}'); showDaySchedule('${dateStr}')">`;
+                html += '<div class="week-day-header">';
+                html += `<span class="week-day-date">${day}日</span>`;
+                html += `<span class="week-day-weekday">${weekday}</span>`;
+                if (isToday) {
+                    html += '<span class="today-badge">今天</span>';
+                }
+                html += '</div>';
+                html += '<div class="week-day-tasks">';
+                
+                if (dayTasks.length > 0) {
+                    dayTasks.forEach(task => {
+                        const completedClass = task.completed ? 'completed' : '';
+                        html += `<div class="week-task ${completedClass}">`;
+                        html += `<span class="week-task-content">${task.content}</span>`;
+                        html += `<span class="week-task-time">${task.time_slot || ''}</span>`;
+                        html += '</div>';
+                    });
+                } else {
+                    html += '<span class="no-task">暂无日程</span>';
+                }
+                
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('week-view-container').innerHTML = html;
+        }
+        
+        function showDaySchedule(date) {
+            const dateObj = new Date(date);
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('today-tasks-title').textContent = dateObj.toLocaleDateString('zh-CN', options) + ' 的任务';
+            
+            const todayTasksDiv = document.getElementById('today-tasks-list');
+            const filteredTasks = allTasks.filter(t => t.date === date && !t.completed);
+            
+            let html = '';
+            if (filteredTasks.length > 0) {
+                filteredTasks.forEach(task => {
+                    html += `<div class="task-card priority-${task.priority === '紧急' ? 'high' : 'normal'}">`;
+                    html += '<div class="d-flex justify-content-between align-items-start">';
+                    html += '<div class="flex-grow-1">';
+                    html += `<h6 style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${task.content}</h6>`;
+                    html += `<p style="font-size: 12px; color: #6b7280;">${task.date} <span class="time-slot-tag">${task.time_slot}</span> | ${task.priority} <span class="category-tag category-${task.category.toLowerCase()}">${task.category}</span></p>`;
+                    html += '</div>';
+                    html += `<input type="checkbox" class="form-check-input" onchange="handleTaskComplete(this, ${task.id})" style="margin-top: 2px;">`;
+                    html += '</div>';
+                    html += '</div>';
+                });
+            } else {
+                html += '<p class="text-center" style="color: #9ca3af; padding: 20px 0;">当天没有任务哦~</p>';
+            }
+            
+            todayTasksDiv.innerHTML = html;
+        }
+        
+        function handleTaskComplete(checkbox, taskId) {
+            checkbox.disabled = true;
+            const completed = checkbox.checked;
+            
+            const formData = new FormData();
+            formData.append('task_id', taskId);
+            formData.append('completed', completed ? 'true' : 'false');
+            
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    checkbox.checked = !completed;
+                    checkbox.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !completed;
+                checkbox.disabled = false;
+            });
+        }
+        
+        function deleteTask(taskId) {
+            if (confirm('确定要删除这个任务吗？')) {
+                const formData = new FormData();
+                formData.append('delete_id', taskId);
+                
+                fetch('/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            selectedDate = today;
+            
+            const now = new Date();
+            currentYear = now.getFullYear();
+            currentMonth = now.getMonth();
+            renderCalendar(currentYear, currentMonth);
+            
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('today-tasks-title').textContent = now.toLocaleDateString('zh-CN', options) + ' 的任务';
+        });
+    </script>
+</body>
+</html>
