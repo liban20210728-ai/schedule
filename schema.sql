@@ -1,0 +1,9 @@
+-- 创建tasks表
+CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    completed INTEGER DEFAULT 0
+);
