@@ -115,5 +115,7 @@ def index():
 if __name__ == '__main__':
     # 初始化数据库
     init_db()
-    # 运行Flask应用
-    app.run(debug=True)
+    # 获取 PORT 环境变量，如果没有设置则默认使用 5000（本地开发时）
+    port = int(os.environ.get('PORT', 5000))
+    # 确保监听所有网络接口 (0.0.0.0)
+    app.run(host='0.0.0.0', port=port)
